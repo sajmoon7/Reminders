@@ -23,6 +23,24 @@ private RemindersSimpleCursorAdapter mCursorAdapter;
         mListView.setDivider(null);
         mDbAdapter = new RemindersDbAdapter(this);
         mDbAdapter.open();
+        if(savedInstanceState == null){
+            mDbAdapter.deleteAllReminders();
+            mDbAdapter.createReminder("Kupić książkę", true);
+            mDbAdapter.createReminder("Wysłać prezent ojcu", false);
+            mDbAdapter.createReminder("Piątkowy obiad ze znajomymi", false);
+            mDbAdapter.createReminder("Gra w squasha", false);
+            mDbAdapter.createReminder("Odgarnąć i posolić podjazd", false);
+            mDbAdapter.createReminder("Przygotować program zajęć z Androida", true);
+            mDbAdapter.createReminder("Kupić nowe krzesło do biura", false);
+            mDbAdapter.createReminder("Zadzwonić do mechanika", false);
+            mDbAdapter.createReminder("Odnowić członkostwo w klubie", false);
+            mDbAdapter.createReminder("Kupić nowy telefon Android Galaxy", true);
+            mDbAdapter.createReminder("Sprzedać stary telefon Android - aukcja", false);
+            mDbAdapter.createReminder("Kupić nowe wiosła do kajaka", false);
+            mDbAdapter.createReminder("Zadzwonić do księgowego", false);
+            mDbAdapter.createReminder("Kupić 300 000 akcji Google", false);
+            mDbAdapter.createReminder("Oddzwonić do Dalajlamy", true);
+        }
         Cursor cursor = mDbAdapter.fetchAllReminders();
         String[] from = new String[]{RemindersDbAdapter.COL_CONTENT};
         int[] to = new int[]{R.id.row_text};
