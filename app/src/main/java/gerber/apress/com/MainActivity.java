@@ -3,6 +3,7 @@ package gerber.apress.com;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -12,18 +13,28 @@ import android.widget.ListView;
 
 public class MainActivity extends AppCompatActivity {
 private ListView mListView;
+private RemindersDbAdapter mDbAdapter;
+private RemindersSimpleCursorAdapter mCursorAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mListView = (ListView) findViewById(R.id.reminders_list_view);
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(
-                this,
+        mListView.setDivider(null);
+        mDbAdapter = new RemindersDbAdapter(this);
+        mDbAdapter.open();
+        Cursor cursor = mDbAdapter.fetchAllReminders();
+        String[] from = new String[]{RemindersDbAdapter.COL_CONTENT};
+        int[] to = new int[]{R.id.row_text};
+        mCursorAdapter = new RemindersSimpleCursorAdapter(
+                MainActivity.this,
                 R.layout.reminders_row,
-                R.id.row_text,
-                new String[]{"pierwszy wiersz", "drugi wiersz", "trzeci wiersz"}
+                cursor,
+                from,
+                to,
+                0
         );
-        mListView.setAdapter(arrayAdapter);
+        mListView.setAdapter(mCursorAdapter);
 
     }
 
