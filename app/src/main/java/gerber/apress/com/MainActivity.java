@@ -1,5 +1,6 @@
 package gerber.apress.com;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -15,10 +16,16 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.lang.reflect.Array;
@@ -32,6 +39,10 @@ private RemindersSimpleCursorAdapter mCursorAdapter;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setHomeButtonEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setIcon(R.mipmap.ic_launcher);
         mListView = (ListView) findViewById(R.id.reminders_list_view);
         mListView.setDivider(null);
         mDbAdapter = new RemindersDbAdapter(this);
@@ -81,9 +92,12 @@ private RemindersSimpleCursorAdapter mCursorAdapter;
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     if(position == 0){
-                        Toast.makeText(MainActivity.this, "edycja pozycji "+masterListPosition, Toast.LENGTH_SHORT).show();
+                      int nId = getIdfromPosition(masterListPosition);
+                      Reminder reminder = mDbAdapter.fetchReminderById(nId);
+                      fireCustomDialog(reminder);
                     }else{
-                        Toast.makeText(MainActivity.this, "usunięcie pozycji "+masterListPosition, Toast.LENGTH_SHORT).show();
+                        mDbAdapter.deleteReminderById(getIdfromPosition(masterListPosition));
+                        mCursorAdapter.changeCursor(mDbAdapter.fetchAllReminders());
                     }
                     dialog.dismiss();
                 }
@@ -139,6 +153,50 @@ private RemindersSimpleCursorAdapter mCursorAdapter;
         return (int) mCursorAdapter.getItemId(nC);
     }
 
+    private void fireCustomDialog(final Reminder reminder){
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_custom);
+        TextView titleView = (TextView) dialog.findViewById(R.id.custom_title);
+        final EditText editCustom = (EditText) dialog.findViewById(R.id.custom_edit_reminder);
+        Button commitButton = (Button) dialog.findViewById(R.id.custom_button_commit);
+        final CheckBox checkBox = (CheckBox) dialog.findViewById(R.id.custom_check_box);
+        LinearLayout rootLayout = (LinearLayout) dialog.findViewById(R.id.custom_root_layout);
+        final boolean isEditOperation = (reminder != null);
+
+        if(isEditOperation){
+            titleView.setText("Edycja przypomnienia");
+            checkBox.setChecked(reminder.getImportant() == 1);
+            editCustom.setText(reminder.getContent());
+            rootLayout.setBackgroundColor(getResources().getColor(R.color.blue));
+        }
+
+        commitButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                String reminderText = editCustom.getText().toString();
+                if(isEditOperation){
+                    Reminder reminderEdited = new Reminder(reminder.getId(),
+                            reminderText, checkBox.isChecked() ? 1 : 0);
+                    mDbAdapter.updateReminder(reminderEdited);
+                }
+                else{
+                    mDbAdapter.createReminder(reminderText, checkBox.isChecked());
+                }
+                mCursorAdapter.changeCursor(mDbAdapter.fetchAllReminders());
+                dialog.dismiss();
+            }
+        });
+            Button buttonCancel = (Button) dialog.findViewById(R.id.custom_button_cancel);
+            buttonCancel.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    dialog.dismiss();
+                }
+            });
+            dialog.show();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
         getMenuInflater().inflate(R.menu.menu_reminders, menu);
@@ -148,7 +206,7 @@ private RemindersSimpleCursorAdapter mCursorAdapter;
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
             case R.id.action_new:
-                Log.d(getLocalClassName(), "utworzenie nowego przypomnienia");
+               fireCustomDialog(null);
                 return true;
             case R.id.action_exit:
                 finish();
